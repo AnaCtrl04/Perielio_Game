@@ -6,8 +6,18 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/SampleScene.unity
-    guid: 8c9cfa26abfee488c85f1582747f6a02
+    path: Assets/Scenes/Cadastro.unity
+    guid: 9fb0ae89a0234e849a04d220ccff2ed8
+  - enabled: 1
+    path: Assets/Scenes/HubMundos.unity
+    guid: a3278c494bc57494eaa97fe84e46bbe9
+  - enabled: 1
+    path: Assets/Scenes/HubFasesMundo01.unity
+    guid: 6a621fa6c5ced08489a027125fae66a9
+  - enabled: 1
+    path: Assets/Scenes/Fase1.1.unity
+    guid: 4cc9c818caa1d114f9b82428c407bc51
   m_configObjects:
+    com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0
