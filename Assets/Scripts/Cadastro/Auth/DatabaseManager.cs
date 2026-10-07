@@ -25,7 +25,6 @@ public class DatabaseManager : MonoBehaviour
 
     private void Awake()
     {
-        // Singleton persistente entre cenas
         if (Instancia != null && Instancia != this)
         {
             Destroy(gameObject);
@@ -34,12 +33,11 @@ public class DatabaseManager : MonoBehaviour
 
         Instancia = this;
         DontDestroyOnLoad(gameObject);
-
         InicializarBanco();
     }
 
     // ════════════════════════════════════════════════════════════════════════
-    // INICIALIZAÇÃO
+    // INICIALIZACAO
     // ════════════════════════════════════════════════════════════════════════
 
     private void InicializarBanco()
@@ -48,8 +46,6 @@ public class DatabaseManager : MonoBehaviour
         Debug.Log($"[Database] Banco de dados em: {caminho}");
 
         db = new SQLiteConnection(caminho);
-
-        // Cria as tabelas se ainda nao existirem
         db.CreateTable<TabelaUsuario>();
         db.CreateTable<TabelaProgresso>();
 
@@ -64,21 +60,59 @@ public class DatabaseManager : MonoBehaviour
             Debug.Log("[Database] Conexao encerrada.");
         }
     }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // METODOS DE PROGRESSO
+    // ════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Salva ou atualiza o progresso de uma fase.
+    /// Avaliacao binaria: concluida = 1, nao concluida = 0.
+    /// Nunca regride — se ja estava concluida, mantem (RN05).
+    /// </summary>
+    public void SalvarProgresso(int usuarioId, int mundo, int fase, int tentativas)
+    {
+        var existente = db.Table<TabelaProgresso>()
+                          .Where(p => p.UsuarioId == usuarioId
+                                   && p.Mundo == mundo
+                                   && p.Fase == fase)
+                          .FirstOrDefault();
+
+        if (existente == null)
+        {
+            db.Insert(new TabelaProgresso
+            {
+                UsuarioId     = usuarioId,
+                Mundo         = mundo,
+                Fase          = fase,
+                Concluida     = 1,
+                Tentativas    = tentativas,
+                DataConclusao = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm")
+            });
+
+            Debug.Log($"[Database] Progresso salvo: Mundo {mundo} Fase {fase} em {tentativas} tentativas.");
+        }
+        else if (existente.Concluida == 0)
+        {
+            existente.Concluida     = 1;
+            existente.Tentativas    = tentativas;
+            existente.DataConclusao = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm");
+            db.Update(existente);
+
+            Debug.Log($"[Database] Progresso atualizado: Mundo {mundo} Fase {fase}.");
+        }
+    }
 }
 
 // ════════════════════════════════════════════════════════════════════════
 // MODELOS DAS TABELAS
 // ════════════════════════════════════════════════════════════════════════
 
-/// <summary>
-/// Tabela de usuarios — alunos e professores cadastrados.
-/// RF01 — Cadastro de Perfil.
-/// </summary>
 [Table("Usuario")]
 public class TabelaUsuario
 {
     [PrimaryKey, AutoIncrement]
-    public int Id { get; set; }
+    public int Id { get; set; } 
 
     [NotNull, Unique]
     public string Nome { get; set; }
@@ -87,16 +121,11 @@ public class TabelaUsuario
     public string Senha { get; set; }
 
     [NotNull]
-    public string Perfil { get; set; }  // "aluno" ou "professor"
+    public string Perfil { get; set; }
 
     public string DataCadastro { get; set; }
 }
 
-/// <summary>
-/// Tabela de progresso por fase — vinculada ao usuario.
-/// RF10 — Avaliacao por Estrelas.
-/// RF08 — Desbloqueio Automatico de Fase.
-/// </summary>
 [Table("Progresso")]
 public class TabelaProgresso
 {
@@ -112,7 +141,7 @@ public class TabelaProgresso
     [NotNull]
     public int Fase { get; set; }
 
-    public int Concluida { get; set; }  
+    public int Concluida { get; set; }
 
     public int Tentativas { get; set; }
 

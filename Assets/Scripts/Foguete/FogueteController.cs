@@ -116,30 +116,31 @@ public class FogueteController : MonoBehaviour
     }
 
     public void Lancar()
-    {
-        if (foiLancado) return;
+{
+    if (foiLancado) return;
 
-        foiLancado = true;
-        rb.bodyType = RigidbodyType2D.Dynamic;
+    foiLancado = true;
+    rb.bodyType = RigidbodyType2D.Dynamic;
 
-        float anguloRad = sliderAngulo.value * Mathf.Deg2Rad;
-        Vector2 direcao = new Vector2(
-            Mathf.Cos(anguloRad),
-            Mathf.Sin(anguloRad)
-        ).normalized;
+    float angulo = sliderAngulo.value;
+    float anguloRad = angulo * Mathf.Deg2Rad;
 
-        float forca = impulsoInicial;
-        rb.AddForce(direcao * forca, ForceMode2D.Impulse);
+    Vector2 direcao = new Vector2(
+        Mathf.Cos(anguloRad),
+        Mathf.Sin(anguloRad)
+    ).normalized; 
 
-        Debug.Log($"[Foguete] Lancado! Angulo: {sliderAngulo.value}° | Massa: {rb.mass}kg | Forca: {forca}");
+    rb.AddForce(direcao * impulsoInicial, ForceMode2D.Impulse);
 
-        if (painelControles != null) painelControles.SetActive(false);
-        if (btnReiniciar != null)    btnReiniciar.gameObject.SetActive(true);
+    Debug.Log($"[Foguete] Lancado! Angulo: {angulo}° Direcao: {direcao}");
 
-        lineRenderer.positionCount = 1;
-        lineRenderer.SetPosition(0, transform.position);
-        contadorPontos = 1;
-    }
+    if (painelControles != null) painelControles.SetActive(false);
+    if (btnReiniciar    != null) btnReiniciar.gameObject.SetActive(true);
+
+    lineRenderer.positionCount = 1;
+    lineRenderer.SetPosition(0, transform.position);
+    contadorPontos = 1;
+}
 
     private void DesenharRastro()
     {
@@ -191,17 +192,24 @@ public class FogueteController : MonoBehaviour
             Debug.Log($"[Foguete] Colisao com: {collision.gameObject.name}");
             foiLancado = false;
             GerenciadorFase.Instancia?.RegistrarColisao();
-        }
+        } 
     }
 
     private void OnTriggerEnter2D(Collider2D other)
-    {
-        if (!foiLancado) return;
+{
+    if (!foiLancado) return;
 
-        if (other.CompareTag("Destino"))
-        {
-            Debug.Log("[Foguete] Chegou ao destino!");
-            GerenciadorFase.Instancia?.RegistrarChegada();
-        }
+    if (other.CompareTag("Destino"))
+    {
+        Debug.Log("[Foguete] Chegou ao destino!");
+        
+        // ADICIONE ESSAS LINHAS:
+        foiLancado = false;
+        rb.linearVelocity = Vector2.zero;
+        rb.angularVelocity = 0f;
+        rb.bodyType = RigidbodyType2D.Kinematic;
+        
+        GerenciadorFase.Instancia?.RegistrarChegada();
     }
+}
 }

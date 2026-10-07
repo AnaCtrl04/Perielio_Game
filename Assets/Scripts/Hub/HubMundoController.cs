@@ -6,14 +6,14 @@ using UnityEngine.SceneManagement;
 /// <summary>
 /// Gerencia o Hub de Mundos do jogo Perielio.
 /// Exibe 3 cards de mundo com desbloqueio progressivo.
-/// O Mundo 2 so desbloqueia quando todas as 5 fases do Mundo 1 forem concluidas.
-/// O Mundo 3 so desbloqueia quando todas as 5 fases do Mundo 2 forem concluidas.
+/// O Mundo 2 so desbloqueia quando todas as 3 fases do Mundo 1 forem concluidas.
+/// O Mundo 3 so desbloqueia quando todas as 3 fases do Mundo 2 forem concluidas.
 /// Avaliacao: passou (chegou ao destino) ou nao passou — sem estrelas (RF08, RF09).
 /// </summary>
 public class HubMundoController : MonoBehaviour
 {
     // ─── TOTAL DE FASES POR MUNDO ────────────────────────────────────────────
-    private const int FASES_POR_MUNDO = 5;
+    private const int FASES_POR_MUNDO = 3;
 
     // ─── CARDS DOS MUNDOS ────────────────────────────────────────────────────
     [System.Serializable]
@@ -162,5 +162,14 @@ public class HubMundoController : MonoBehaviour
             SessaoManager.Instancia.Sair();
         else
             SceneManager.LoadScene("Cadastro");
+    }
+
+     // ─── GLOSSARIO ───────────────────────────────────────────────────
+    [Header("Glossario")]
+    [SerializeField] private string cenaGlossario = "Glossario";
+
+    public void AbrirGlossario()
+    {
+        UnityEngine.SceneManagement.SceneManager.LoadScene(cenaGlossario);
     }
 }

@@ -17,6 +17,18 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Fase1.1.unity
     guid: 4cc9c818caa1d114f9b82428c407bc51
+  - enabled: 1
+    path: Assets/Scenes/Fase1.2.unity
+    guid: 07159a835b4ff1d4085c94d62d2ff27c
+  - enabled: 1
+    path: Assets/Scenes/Fase1.3.unity
+    guid: d86eb877cc12dde4a8007c59cad79814
+  - enabled: 1
+    path: Assets/Scenes/ModoProfessor.unity
+    guid: 3dcd22e5ff9625d478ef0c4d3851eca3
+  - enabled: 1
+    path: Assets/Scenes/Glossario.unity
+    guid: 0967f6f85cd6c144ca02aa9740e015f1
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}

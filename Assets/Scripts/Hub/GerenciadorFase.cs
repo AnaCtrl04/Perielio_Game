@@ -2,58 +2,50 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
+using UnityEngine.SceneManagement;
 
-/// <summary>
-/// Gerencia o estado de cada fase do jogo Periélio.
-/// Controla tentativas, pontuação por estrelas, feedback pedagógico
-/// e transições entre estados (pré-lançamento, voo, resultado).
-/// Implementa as Regras de Negócio RN04, RN05, RN07, RN09, RN12, RN13.
-/// </summary>
 public class GerenciadorFase : MonoBehaviour
 {
-    // ─── SINGLETON ───────────────────────────────────────────────────────────
     public static GerenciadorFase Instancia { get; private set; }
 
-    // ─── DADOS DA FASE ───────────────────────────────────────────────────────
     [Header("Dados da Fase")]
     [SerializeField] private string nomeFase = "Fase 1.1";
     [SerializeField] private int indiceMundo = 1;
-    [SerializeField] private int indiceFase = 1;
+    [SerializeField] private int indiceFase  = 1;
 
-    [Header("Dica Pedagógica (RN09)")]
+    [Header("Dica Pedagogica (RN09)")]
     [SerializeField][TextArea(2, 5)]
-    private string dicaConceito = "Quanto maior a massa do foguete, maior a força gravitacional que os planetas exercem sobre ele!";
-    [SerializeField] private string conceitoFisico = "Lei da Gravitação Universal";
+    private string dicaConceito = "Quanto maior a massa do foguete, maior a forca gravitacional que os planetas exercem sobre ele!";
+    [SerializeField] private string conceitoFisico = "Lei da Gravitacao Universal";
 
-    // ─── UI ──────────────────────────────────────────────────────────────────
+    [Header("Navegacao")]
+    [SerializeField] private string cenaProximaFase = "Fase1.2";
+    [SerializeField] private string cenaMenu        = "HubFasesMundo01";
+
     [Header("UI de Gameplay")]
     [SerializeField] private TextMeshProUGUI txtNomeFase;
     [SerializeField] private TextMeshProUGUI txtTentativas;
-    [SerializeField] private Image[] imgEstrelas;              // 3 imagens de estrela no HUD
+    [SerializeField] private Image[]         imgEstrelas;
 
     [Header("Painel de Resultado")]
-    [SerializeField] private GameObject painelResultado;
+    [SerializeField] private GameObject      painelResultado;
     [SerializeField] private TextMeshProUGUI txtResultadoTitulo;
     [SerializeField] private TextMeshProUGUI txtDicaPedagogica;
     [SerializeField] private TextMeshProUGUI txtConceitoFisico;
-    [SerializeField] private Image[] imgEstrelasResultado;     // 3 estrelas no card
-    [SerializeField] private Sprite spriteEstrelaCheia;
-    [SerializeField] private Sprite spriteEstrelaVazia;
-    [SerializeField] private Button btnProximaFase;
-    [SerializeField] private Button btnRepetir;
-    [SerializeField] private Button btnMenu;
+    [SerializeField] private Image[]         imgEstrelasResultado;
+    [SerializeField] private Sprite          spriteEstrelaCheia;
+    [SerializeField] private Sprite          spriteEstrelaVazia;
+    [SerializeField] private Button          btnProximaFase;
+    [SerializeField] private Button          btnRepetir;
+    [SerializeField] private Button          btnMenu;
 
-    [Header("Painel de Colisão")]
-    [SerializeField] private GameObject painelColisao;
+    [Header("Painel de Colisao")]
+    [SerializeField] private GameObject      painelColisao;
     [SerializeField] private TextMeshProUGUI txtMensagemColisao;
-    [SerializeField] private float tempoExibicaoColisao = 2.5f;
+    [SerializeField] private float           tempoExibicaoColisao = 2.5f;
 
-    // ─── ESTADO ──────────────────────────────────────────────────────────────
-    private int tentativasUsadas = 0;
-    private int estrelasObtidas = 0;
-    private bool faseConcluida = false;
-
-    // ─── REFERÊNCIAS ─────────────────────────────────────────────────────────
+    private int  tentativasUsadas = 0;
+    private bool faseConcluida    = false;
     private FogueteController foguete;
 
     // ════════════════════════════════════════════════════════════════════════
@@ -62,7 +54,6 @@ public class GerenciadorFase : MonoBehaviour
 
     private void Awake()
     {
-        // Singleton
         if (Instancia != null && Instancia != this) { Destroy(gameObject); return; }
         Instancia = this;
     }
@@ -71,8 +62,13 @@ public class GerenciadorFase : MonoBehaviour
     {
         foguete = FindFirstObjectByType<FogueteController>();
 
-        painelResultado.SetActive(false);
-        painelColisao.SetActive(false);
+        if (painelResultado != null) painelResultado.SetActive(false);
+        if (painelColisao   != null) painelColisao.SetActive(false);
+
+        // Conecta botoes por codigo como seguranca extra
+        if (btnProximaFase != null) btnProximaFase.onClick.AddListener(BtnProximaFase);
+        if (btnRepetir     != null) btnRepetir.onClick.AddListener(BtnRepetir);
+        if (btnMenu        != null) btnMenu.onClick.AddListener(BtnMenu);
 
         AtualizarUI();
     }
@@ -81,9 +77,6 @@ public class GerenciadorFase : MonoBehaviour
     // EVENTOS DE JOGO
     // ════════════════════════════════════════════════════════════════════════
 
-    /// <summary>
-    /// Chamado pelo FogueteController ao colidir com planeta ou buraco negro (RN07).
-    /// </summary>
     public void RegistrarColisao()
     {
         if (faseConcluida) return;
@@ -92,65 +85,63 @@ public class GerenciadorFase : MonoBehaviour
         AtualizarUI();
 
         string mensagem = tentativasUsadas == 1
-            ? "A força gravitacional desviou seu foguete! Tente ajustar a massa."
+            ? "A forca gravitacional desviou seu foguete! Tente ajustar a massa."
             : $"Tentativa {tentativasUsadas}. Observe o rastro anterior e ajuste!";
 
         StartCoroutine(ExibirFeedbackColisao(mensagem));
     }
 
-    /// <summary>
-    /// Chamado pelo FogueteController ao atingir o destino (RF04, RN04).
-    /// </summary>
     public void RegistrarChegada()
     {
         if (faseConcluida) return;
 
-        faseConcluida = true;
+        faseConcluida    = true;
         tentativasUsadas++;
 
-        estrelasObtidas = CalcularEstrelas();
         SalvarProgresso();
-
         StartCoroutine(ExibirResultado());
     }
 
     // ════════════════════════════════════════════════════════════════════════
-    // SISTEMA DE ESTRELAS (RN04)
+    // PERSISTENCIA
     // ════════════════════════════════════════════════════════════════════════
 
-    /// <summary>
-    /// Calcula as estrelas obtidas conforme as Regras de Negócio RN04:
-    /// 1 estrela = chegou ao destino
-    /// 2 estrelas = chegou em menos de N tentativas
-    /// 3 estrelas = chegou na primeira tentativa (rota ótima)
-    /// </summary>
-    private int CalcularEstrelas()
-{
-    return 1; // avaliacao binaria: passou ou nao passou
-}
-
-    // ════════════════════════════════════════════════════════════════════════
-    // PERSISTÊNCIA (RN05, RF08)
-    // ════════════════════════════════════════════════════════════════════════
-
-    /// <summary>
-    /// Salva o progresso. Nunca regride a pontuação (RN05).
-    /// </summary>
     private void SalvarProgresso()
     {
-        string chave = $"fase_{indiceMundo}_{indiceFase}_estrelas";
-        int estrelasSalvas = PlayerPrefs.GetInt(chave, 0);
+        // Salva como concluida no PlayerPrefs
+        string chave = $"fase_{indiceMundo}_{indiceFase}_concluida";
+        PlayerPrefs.SetInt(chave, 1);
 
-        // RN05: só atualiza se melhorou
-        if (estrelasObtidas > estrelasSalvas)
+        // Salva tentativas
+        string chaveTent = $"fase_{indiceMundo}_{indiceFase}_tentativas";
+        PlayerPrefs.SetInt(chaveTent, tentativasUsadas);
+        PlayerPrefs.Save();
+
+        // Salva no SQLite se disponivel
+        if (DatabaseManager.Instancia != null && SessaoManager.Instancia?.UsuarioAtual != null)
         {
-            PlayerPrefs.SetInt(chave, estrelasObtidas);
-            PlayerPrefs.Save();
+            DatabaseManager.Instancia.SalvarProgresso(
+                SessaoManager.Instancia.UsuarioAtual.Id,
+                indiceMundo,
+                indiceFase,
+                tentativasUsadas
+            );
         }
 
-        // Desbloqueia glossário da fase (RN10)
-        PlayerPrefs.SetInt($"glossario_{indiceMundo}_{indiceFase}", 1);
-        PlayerPrefs.Save();
+        // Registra nome do aluno na lista para o modo professor
+        string nomeAluno = PlayerPrefs.GetString("sessao_usuario", "");
+        if (!string.IsNullOrEmpty(nomeAluno))
+        {
+            string listaAtual = PlayerPrefs.GetString("lista_alunos", "");
+            if (!listaAtual.Contains(nomeAluno))
+            {
+                listaAtual = string.IsNullOrEmpty(listaAtual) ? nomeAluno : listaAtual + "," + nomeAluno;
+                PlayerPrefs.SetString("lista_alunos", listaAtual);
+                PlayerPrefs.Save();
+            }
+        }
+
+        Debug.Log($"[GerenciadorFase] Mundo {indiceMundo} Fase {indiceFase} concluida em {tentativasUsadas} tentativas.");
     }
 
     // ════════════════════════════════════════════════════════════════════════
@@ -159,61 +150,63 @@ public class GerenciadorFase : MonoBehaviour
 
     private void AtualizarUI()
     {
-        if (txtNomeFase) txtNomeFase.text = nomeFase;
-        if (txtTentativas) txtTentativas.text = $"Tentativas: {tentativasUsadas}";
+        if (txtNomeFase   != null) txtNomeFase.text   = nomeFase;
+        if (txtTentativas != null) txtTentativas.text = $"Tentativas: {tentativasUsadas}";
     }
 
     private IEnumerator ExibirFeedbackColisao(string mensagem)
     {
-        painelColisao.SetActive(true);
-        txtMensagemColisao.text = mensagem;
-        yield return new WaitForSeconds(tempoExibicaoColisao);
-        painelColisao.SetActive(false);
+        if (painelColisao != null)
+        {
+            painelColisao.SetActive(true);
+            if (txtMensagemColisao != null) txtMensagemColisao.text = mensagem;
+        }
 
-        // Reinicia foguete (RN12 - sem limite de tentativas)
-        foguete?.Reiniciar();
+        yield return new WaitForSeconds(tempoExibicaoColisao);
+
+        if (painelColisao != null) painelColisao.SetActive(false);
+        if (foguete != null) foguete.Reiniciar();
     }
 
     private IEnumerator ExibirResultado()
     {
         yield return new WaitForSeconds(0.5f);
 
-        painelResultado.SetActive(true);
+        if (painelResultado != null) painelResultado.SetActive(true);
 
-        // Título
-        txtResultadoTitulo.text = estrelasObtidas == 3
-            ? "Perfeito! Rota ótima!" : estrelasObtidas == 2
-            ? "Muito bem!" : "Fase concluída!";
+        if (txtResultadoTitulo != null)
+            txtResultadoTitulo.text = "Fase concluida!";
 
-        // Dica pedagógica (RN09)
-        txtDicaPedagogica.text = dicaConceito;
-        txtConceitoFisico.text = $"Conceito aprendido: {conceitoFisico}";
+        if (txtDicaPedagogica != null)
+            txtDicaPedagogica.text = dicaConceito;
 
-        // Estrelas do resultado
-        for (int i = 0; i < imgEstrelasResultado.Length; i++)
-            imgEstrelasResultado[i].sprite = i < estrelasObtidas
-                ? spriteEstrelaCheia : spriteEstrelaVazia;
+        if (txtConceitoFisico != null)
+            txtConceitoFisico.text = $"Conceito aprendido: {conceitoFisico}";
     }
 
     // ════════════════════════════════════════════════════════════════════════
-    // BOTÕES DO PAINEL DE RESULTADO
+    // BOTOES DE NAVEGACAO
     // ════════════════════════════════════════════════════════════════════════
 
     public void BtnProximaFase()
     {
-        int proximaFase = indiceFase + 1;
-        UnityEngine.SceneManagement.SceneManager.LoadScene(
-            $"Mundo{indiceMundo}_Fase{proximaFase}");
+        Debug.Log($"[GerenciadorFase] Carregando proxima fase: {cenaProximaFase}");
+        SceneManager.LoadScene(cenaProximaFase);
     }
 
     public void BtnRepetir()
     {
-        UnityEngine.SceneManagement.SceneManager.LoadScene(
-            UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     public void BtnMenu()
     {
-        UnityEngine.SceneManagement.SceneManager.LoadScene("HubFases");
+        Debug.Log($"[GerenciadorFase] Voltando para menu: {cenaMenu}");
+        SceneManager.LoadScene(cenaMenu);
+    }
+
+    private int CalcularEstrelas()
+    {
+        return 1;
     }
 }
