@@ -123,30 +123,7 @@ public class GlossarioController : MonoBehaviour
     /// </summary>
     private bool VerbeteDesbloqueado(int mundo, int fase)
     {
-        // 1) Consulta no banco (aluno logado)
-        if (DatabaseManager.Instancia != null &&
-            DatabaseManager.Instancia.Conexao != null &&
-            SessaoManager.Instancia != null &&
-            SessaoManager.Instancia.UsuarioAtual != null)
-        {
-            int usuarioId = SessaoManager.Instancia.UsuarioAtual.Id;
-
-            var registro = DatabaseManager.Instancia.Conexao
-                .Table<TabelaProgresso>()
-                .Where(p => p.UsuarioId == usuarioId
-                         && p.Mundo == mundo
-                         && p.Fase == fase
-                         && p.Concluida == 1)
-                .FirstOrDefault();
-
-            if (registro != null) return true;
-        }
-
-        // 2) Fallback: PlayerPrefs (o que o GerenciadorFase grava)
-        if (PlayerPrefs.GetInt($"fase_{mundo}_{fase}_concluida", 0) == 1) return true;
-        if (PlayerPrefs.GetInt($"glossario_{mundo}_{fase}", 0) == 1) return true;
-
-        return false;
+        return ProgressoAluno.VerbeteDesbloqueado(mundo, fase);
     }
 
     /// <summary>

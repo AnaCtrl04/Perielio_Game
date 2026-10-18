@@ -6,24 +6,36 @@ using System.Collections.Generic;
 using System.Linq;
 
 /// <summary>
-/// Controla a tela do Modo Professor do jogo Periélio.
-/// Exibe ranking de alunos com filtro por mundo e fase.
-/// RF14 — Autenticação do Professor.
-/// RF15 — Visualização de progresso dos alunos.
+/// Controla a tela do Modo Professor do jogo Perielio.
+/// Exibe o ranking de alunos com filtro por mundo e por fase, feito com
+/// botoes (mais confiaveis e mais faceis de tocar que dropdowns no mobile).
+/// RF14 — Autenticacao do Professor.
+/// RF15 — Visualizacao de progresso dos alunos.
 /// </summary>
 public class ModoProfessorController : MonoBehaviour
 {
-    // ─── FILTROS ─────────────────────────────────────────────────────────────
-    [Header("Filtros")]
-    [SerializeField] private TMP_Dropdown dropdownMundo;
-    [SerializeField] private TMP_Dropdown dropdownFase;
-    [SerializeField] private Button       btnFiltrar;
-    [SerializeField] private Button       btnLimparFiltro;
+    // ─── FILTROS POR BOTAO ───────────────────────────────────────────────────
+    [Header("Filtro de Mundo (indice 0 = Todos)")]
+    [Tooltip("Ordem: Todos, Mundo 1, Mundo 2, Mundo 3")]
+    [SerializeField] private Button[] btnsMundo = new Button[4];
+
+    [Header("Filtro de Fase (indice 0 = Todas)")]
+    [Tooltip("Ordem: Todas, Fase 1, Fase 2, Fase 3")]
+    [SerializeField] private Button[] btnsFase = new Button[4];
+
+    [Header("Botao Limpar (opcional)")]
+    [SerializeField] private Button btnLimparFiltro;
+
+    [Header("Cores dos Botoes de Filtro")]
+    [SerializeField] private Color corFiltroAtivo   = new Color(0.95f, 0.55f, 0.15f, 1f);
+    [SerializeField] private Color corFiltroInativo = new Color(1f, 1f, 1f, 0.25f);
+    [SerializeField] private Color corTextoAtivo    = Color.white;
+    [SerializeField] private Color corTextoInativo  = new Color(0.85f, 0.85f, 0.9f, 1f);
 
     // ─── RANKING ─────────────────────────────────────────────────────────────
     [Header("Ranking")]
-    [SerializeField] private Transform    containerRanking;   // pai dos cards
-    [SerializeField] private GameObject   prefabCardAluno;    // prefab de cada linha
+    [SerializeField] private Transform       containerRanking;   // ScrollView/Viewport/Content
+    [SerializeField] private GameObject      prefabCardAluno;    // prefab de cada linha
     [SerializeField] private TextMeshProUGUI txtTituloRanking;
     [SerializeField] private TextMeshProUGUI txtSemDados;
 
@@ -31,6 +43,17 @@ public class ModoProfessorController : MonoBehaviour
     [Header("UI Geral")]
     [SerializeField] private TextMeshProUGUI txtNomeProfessor;
     [SerializeField] private Button          btnVoltar;
+
+    [Header("Navegacao")]
+    [SerializeField] private string cenaVoltar = "Cadastro";
+
+    // ─── CORES DO PODIO ──────────────────────────────────────────────────────
+    [Header("Cores do Ranking")]
+    [SerializeField] private Color corPrimeiro = new Color(1f, 0.84f, 0f, 0.30f);
+    [SerializeField] private Color corSegundo  = new Color(0.75f, 0.75f, 0.75f, 0.30f);
+    [SerializeField] private Color corTerceiro = new Color(0.80f, 0.50f, 0.20f, 0.30f);
+    [SerializeField] private Color corDemais   = new Color(1f, 1f, 1f, 0.10f);
+    [SerializeField] private bool  destacarPodio = true;
 
     // ─── ESTADO ──────────────────────────────────────────────────────────────
     private int mundoFiltro = 0; // 0 = todos
@@ -42,82 +65,98 @@ public class ModoProfessorController : MonoBehaviour
 
     private void Start()
     {
-        // Nome do professor logado
         if (txtNomeProfessor != null)
         {
-            string nome = PlayerPrefs.GetString("sessao_usuario", "Professor");
+            string nome = PlayerPrefs.GetString(ProgressoAluno.CHAVE_SESSAO, "Professor");
             txtNomeProfessor.text = "Bem-vindo, " + nome + "!";
         }
 
-        // Botoes
-        if (btnVoltar   != null) btnVoltar.onClick.AddListener(Voltar);
-        if (btnFiltrar  != null) btnFiltrar.onClick.AddListener(AplicarFiltro);
-        if (btnLimparFiltro != null) btnLimparFiltro.onClick.AddListener(LimparFiltro);
+        if (btnVoltar != null)
+            btnVoltar.onClick.AddListener(Voltar);
 
-        // Configura dropdowns
-        ConfigurarDropdowns();
+        if (btnLimparFiltro != null)
+            btnLimparFiltro.onClick.AddListener(LimparFiltro);
 
-        // Carrega ranking geral
+        ConfigurarBotoesDeFiltro();
         CarregarRanking(0, 0);
     }
 
     // ════════════════════════════════════════════════════════════════════════
-    // DROPDOWNS
+    // BOTOES DE FILTRO
     // ════════════════════════════════════════════════════════════════════════
 
-    private void ConfigurarDropdowns()
+    private void ConfigurarBotoesDeFiltro()
     {
-        // Dropdown Mundo
-        if (dropdownMundo != null)
+        for (int i = 0; i < btnsMundo.Length; i++)
         {
-            dropdownMundo.ClearOptions();
-            dropdownMundo.AddOptions(new List<string>
+            if (btnsMundo[i] == null)
             {
-                "Mundos",
-                "Mundo 1 — Sistema Solar",
-                "Mundo 2 — Evolução Estelar",
-                "Mundo 3 — Cosmo Profundo"
-            });
-            dropdownMundo.onValueChanged.AddListener(OnMundoChanged);
+                Debug.LogWarning($"[Professor] Botao de mundo indice {i} nao atribuido no Inspector.");
+                continue;
+            }
+
+            int indice = i; // captura local para o closure
+            btnsMundo[i].onClick.RemoveAllListeners();
+            btnsMundo[i].onClick.AddListener(() => SelecionarMundo(indice));
         }
 
-        // Dropdown Fase
-        if (dropdownFase != null)
+        for (int i = 0; i < btnsFase.Length; i++)
         {
-            dropdownFase.ClearOptions();
-            dropdownFase.AddOptions(new List<string>
+            if (btnsFase[i] == null)
             {
-                "Fases",
-                "Fase 1",
-                "Fase 2",
-                "Fase 3"
-            });
+                Debug.LogWarning($"[Professor] Botao de fase indice {i} nao atribuido no Inspector.");
+                continue;
+            }
+
+            int indice = i;
+            btnsFase[i].onClick.RemoveAllListeners();
+            btnsFase[i].onClick.AddListener(() => SelecionarFase(indice));
         }
+
+        AtualizarVisualDosFiltros();
     }
 
-    private void OnMundoChanged(int index)
+    public void SelecionarMundo(int indice)
     {
-        mundoFiltro = index;
+        mundoFiltro = indice;
+        AtualizarVisualDosFiltros();
+        CarregarRanking(mundoFiltro, faseFiltro);
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // FILTRO
-    // ════════════════════════════════════════════════════════════════════════
-
-    public void AplicarFiltro()
+    public void SelecionarFase(int indice)
     {
-        mundoFiltro = dropdownMundo != null ? dropdownMundo.value : 0;
-        faseFiltro  = dropdownFase  != null ? dropdownFase.value  : 0;
+        faseFiltro = indice;
+        AtualizarVisualDosFiltros();
         CarregarRanking(mundoFiltro, faseFiltro);
     }
 
     public void LimparFiltro()
     {
-        if (dropdownMundo != null) dropdownMundo.value = 0;
-        if (dropdownFase  != null) dropdownFase.value  = 0;
         mundoFiltro = 0;
         faseFiltro  = 0;
+        AtualizarVisualDosFiltros();
         CarregarRanking(0, 0);
+    }
+
+    /// <summary>Destaca o botao selecionado de cada linha de filtro.</summary>
+    private void AtualizarVisualDosFiltros()
+    {
+        for (int i = 0; i < btnsMundo.Length; i++)
+            PintarBotao(btnsMundo[i], i == mundoFiltro);
+
+        for (int i = 0; i < btnsFase.Length; i++)
+            PintarBotao(btnsFase[i], i == faseFiltro);
+    }
+
+    private void PintarBotao(Button btn, bool ativo)
+    {
+        if (btn == null) return;
+
+        var img = btn.GetComponent<Image>();
+        if (img != null) img.color = ativo ? corFiltroAtivo : corFiltroInativo;
+
+        var txt = btn.GetComponentInChildren<TextMeshProUGUI>();
+        if (txt != null) txt.color = ativo ? corTextoAtivo : corTextoInativo;
     }
 
     // ════════════════════════════════════════════════════════════════════════
@@ -126,20 +165,15 @@ public class ModoProfessorController : MonoBehaviour
 
     private void CarregarRanking(int mundo, int fase)
     {
-        // Limpa cards anteriores
         LimparCards();
 
-        // Atualiza título
         string titulo = "Ranking Geral";
-        if (mundo > 0 && fase > 0)
-            titulo = $"Ranking — Mundo {mundo} / Fase {fase}";
-        else if (mundo > 0)
-            titulo = $"Ranking — Mundo {mundo}";
+        if (mundo > 0 && fase > 0) titulo = $"Ranking — Mundo {mundo} / Fase {fase}";
+        else if (mundo > 0)        titulo = $"Ranking — Mundo {mundo}";
+        else if (fase  > 0)        titulo = $"Ranking — Fase {fase} (todos os mundos)";
 
-        if (txtTituloRanking != null)
-            txtTituloRanking.text = titulo;
+        if (txtTituloRanking != null) txtTituloRanking.text = titulo;
 
-        // Busca todos os alunos no PlayerPrefs
         List<DadosAluno> alunos = BuscarDadosAlunos(mundo, fase);
 
         if (alunos.Count == 0)
@@ -154,97 +188,57 @@ public class ModoProfessorController : MonoBehaviour
 
         if (txtSemDados != null) txtSemDados.gameObject.SetActive(false);
 
-        // Ordena: mais fases concluídas primeiro, depois menos tentativas
         alunos = alunos
             .OrderByDescending(a => a.fasesConcluidas)
             .ThenBy(a => a.totalTentativas)
             .ToList();
 
-        // Cria cards
         for (int i = 0; i < alunos.Count; i++)
-        {
             CriarCardAluno(alunos[i], i + 1);
-        }
     }
 
+    /// <summary>
+    /// Monta o ranking a partir das MESMAS chaves que o restante do jogo usa
+    /// (classe ProgressoAluno), garantindo que o que o professor ve seja
+    /// exatamente o progresso que o aluno tem nos hubs e no glossario.
+    /// </summary>
     private List<DadosAluno> BuscarDadosAlunos(int mundo, int fase)
     {
         var resultado = new List<DadosAluno>();
 
-        // Busca via SQLite se disponível
-        if (DatabaseManager.Instancia != null)
-        {
-            var usuarios = DatabaseManager.Instancia.Conexao
-                .Table<TabelaUsuario>()
-                .Where(u => u.Perfil == "aluno")
-                .ToList();
+        string[] nomes = ProgressoAluno.ListaDeAlunos();
+        if (nomes.Length == 0) return resultado;
 
-            foreach (var usuario in usuarios)
-            {
-                var dados = new DadosAluno { nome = usuario.Nome };
-
-                // Busca progresso filtrado
-                var query = DatabaseManager.Instancia.Conexao
-                    .Table<TabelaProgresso>()
-                    .Where(p => p.UsuarioId == usuario.Id && p.Concluida == 1);
-
-                if (mundo > 0) query = query.Where(p => p.Mundo == mundo);
-                if (fase  > 0) query = query.Where(p => p.Fase  == fase);
-
-                var progressos = query.ToList();
-                dados.fasesConcluidas  = progressos.Count;
-                dados.totalTentativas  = progressos.Sum(p => p.Tentativas);
-
-                resultado.Add(dados);
-            }
-        }
-        else
-        {
-            // Fallback PlayerPrefs
-            resultado = BuscarDadosPlayerPrefs(mundo, fase);
-        }
-
-        return resultado;
-    }
-
-    private List<DadosAluno> BuscarDadosPlayerPrefs(int mundo, int fase)
-    {
-        var resultado = new List<DadosAluno>();
-        string listaAlunos = PlayerPrefs.GetString("lista_alunos", "");
-
-        if (string.IsNullOrEmpty(listaAlunos)) return resultado;
-
-        string[] nomes = listaAlunos.Split(',');
-        int mundoMax = mundo > 0 ? mundo : 3;
-        int faseMax  = fase  > 0 ? fase  : 3;
+        // 0 nos filtros significa "todos"
         int mundoMin = mundo > 0 ? mundo : 1;
+        int mundoMax = mundo > 0 ? mundo : 3;
         int faseMin  = fase  > 0 ? fase  : 1;
+        int faseMax  = fase  > 0 ? fase  : 3;
 
-        foreach (string nome in nomes)
+        foreach (string bruto in nomes)
         {
+            string nome = bruto.Trim();
             if (string.IsNullOrEmpty(nome)) continue;
 
             var dados = new DadosAluno { nome = nome };
-            int concluidas = 0;
-            int tentativas = 0;
 
             for (int m = mundoMin; m <= mundoMax; m++)
             {
                 for (int f = faseMin; f <= faseMax; f++)
                 {
-                    string prefixo = $"aluno_{nome}_m{m}_f{f}";
-                    if (PlayerPrefs.GetInt(prefixo + "_concluida", 0) == 1)
-                    {
-                        concluidas++;
-                        tentativas += PlayerPrefs.GetInt(prefixo + "_tentativas", 0);
-                    }
+                    if (!ProgressoAluno.FaseConcluidaDe(nome, m, f)) continue;
+
+                    dados.fasesConcluidas++;
+                    dados.totalTentativas += ProgressoAluno.TentativasDe(nome, m, f);
                 }
             }
 
-            dados.fasesConcluidas = concluidas;
-            dados.totalTentativas = tentativas;
             resultado.Add(dados);
         }
+
+        Debug.Log($"[Professor] Filtro mundo={mundo} fase={fase} -> " +
+                  $"{resultado.Count} aluno(s). " +
+                  string.Join(" | ", resultado.Select(a => $"{a.nome}:{a.fasesConcluidas}")));
 
         return resultado;
     }
@@ -255,34 +249,37 @@ public class ModoProfessorController : MonoBehaviour
 
     private void CriarCardAluno(DadosAluno dados, int posicao)
     {
-        if (prefabCardAluno == null || containerRanking == null) return;
+        if (prefabCardAluno == null || containerRanking == null)
+        {
+            Debug.LogError("[Professor] 'Prefab Card Aluno' ou 'Container Ranking' nao atribuido!");
+            return;
+        }
 
         GameObject card = Instantiate(prefabCardAluno, containerRanking);
+        card.SetActive(true);
 
-        // Posição no ranking
         var txtPos = card.transform.Find("TxtPosicao")?.GetComponent<TextMeshProUGUI>();
         if (txtPos != null) txtPos.text = posicao + "º";
 
-        // Nome do aluno
         var txtNome = card.transform.Find("TxtNome")?.GetComponent<TextMeshProUGUI>();
         if (txtNome != null) txtNome.text = dados.nome;
 
-        // Fases concluídas
         var txtFases = card.transform.Find("TxtFases")?.GetComponent<TextMeshProUGUI>();
-        if (txtFases != null) txtFases.text = dados.fasesConcluidas + " fases";
+        if (txtFases != null)
+            txtFases.text = dados.fasesConcluidas == 1 ? "1 fase" : dados.fasesConcluidas + " fases";
 
-        // Total de tentativas
         var txtTent = card.transform.Find("TxtTentativas")?.GetComponent<TextMeshProUGUI>();
         if (txtTent != null) txtTent.text = dados.totalTentativas + " tent.";
 
-        // Destaque para top 3
+        if (!destacarPodio) return;
+
         var imgFundo = card.GetComponent<Image>();
         if (imgFundo != null)
         {
-            imgFundo.color = posicao == 1 ? new Color(1f, 0.84f, 0f, 0.3f)    // ouro
-                           : posicao == 2 ? new Color(0.75f, 0.75f, 0.75f, 0.3f) // prata
-                           : posicao == 3 ? new Color(0.8f, 0.5f, 0.2f, 0.3f)  // bronze
-                           : new Color(1f, 1f, 1f, 0.1f);                        // normal
+            imgFundo.color = posicao == 1 ? corPrimeiro
+                           : posicao == 2 ? corSegundo
+                           : posicao == 3 ? corTerceiro
+                           : corDemais;
         }
     }
 
@@ -294,12 +291,12 @@ public class ModoProfessorController : MonoBehaviour
     }
 
     // ════════════════════════════════════════════════════════════════════════
-    // NAVEGAÇÃO
+    // NAVEGACAO
     // ════════════════════════════════════════════════════════════════════════
 
     public void Voltar()
     {
-        SceneManager.LoadScene("Cadastro");
+        SceneManager.LoadScene(cenaVoltar);
     }
 }
 

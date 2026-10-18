@@ -22,7 +22,7 @@ EditorBuildSettings:
     guid: 07159a835b4ff1d4085c94d62d2ff27c
   - enabled: 1
     path: Assets/Scenes/Fase1.3.unity
-    guid: d86eb877cc12dde4a8007c59cad79814
+    guid: 0c1461d2b018bba40853b9c3daefa8c0
   - enabled: 1
     path: Assets/Scenes/ModoProfessor.unity
     guid: 3dcd22e5ff9625d478ef0c4d3851eca3

@@ -2,11 +2,11 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.SceneManagement;
+using System.Linq;
 
 /// <summary>
 /// Gerencia o Hub de Fases de um mundo especifico.
-/// Exibe 5 botoes de fase com desbloqueio sequencial.
-/// Uma fase so desbloqueia se a anterior foi concluida (RF07, RF08).
+/// Desbloqueio sequencial: uma fase so abre se a anterior foi concluida (RF07, RF08).
 /// Avaliacao binaria: concluida (chegou ao destino) ou nao concluida.
 /// </summary>
 public class HubFasesController : MonoBehaviour
@@ -29,16 +29,19 @@ public class HubFasesController : MonoBehaviour
         public Color             corBloqueada   = new Color(0.3f, 0.3f, 0.3f);
     }
 
-    [Header("Botoes das 5 Fases")]
-    [SerializeField] private BotaoFase[] fases = new BotaoFase[5];
+    [Header("Botoes das Fases")]
+    [SerializeField] private BotaoFase[] fases = new BotaoFase[3];
 
     [Header("Nomes das Cenas de Cada Fase")]
-    [SerializeField] private string[] cenasFases = new string[5];
+    [SerializeField] private string[] cenasFases = new string[3];
 
     [Header("UI Geral")]
     [SerializeField] private TextMeshProUGUI txtNomeMundo;
     [SerializeField] private TextMeshProUGUI txtProgresso;
     [SerializeField] private Button          btnVoltar;
+
+    [Header("Navegacao")]
+    [SerializeField] private string cenaHubMundos = "HubMundos";
 
     // ════════════════════════════════════════════════════════════════════════
     // UNITY LIFECYCLE
@@ -65,41 +68,37 @@ public class HubFasesController : MonoBehaviour
 
         for (int i = 0; i < fases.Length; i++)
         {
-            if (fases[i] == null || fases[i].btn == null) continue;
+            if (fases[i] == null || fases[i].btn == null)
+            {
+                Debug.LogWarning($"[HubFases] Botao da fase {i + 1} nao esta atribuido no Inspector!");
+                continue;
+            }
 
             int numeroFase = i + 1;
+
             bool concluida    = FaseConcluida(numeroMundo, numeroFase);
-            bool desbloqueada = numeroFase == 1 || FaseConcluida(numeroMundo, numeroFase - 1);
+            bool desbloqueada = (numeroFase == 1) || FaseConcluida(numeroMundo, numeroFase - 1);
 
             if (concluida) totalConcluidas++;
+
+            Debug.Log($"[HubFases] Mundo {numeroMundo} Fase {numeroFase} -> " +
+                      $"concluida={concluida} | desbloqueada={desbloqueada}");
 
             ConfigurarBotaoFase(fases[i], numeroFase, concluida, desbloqueada);
         }
 
-        // Atualiza progresso
         if (txtProgresso != null)
             txtProgresso.text = $"{totalConcluidas} / {fases.Length} concluidas";
     }
 
+    /// <summary>
+    /// Verifica se a fase foi concluida PELO ALUNO LOGADO.
+    /// A consulta vai toda pela classe ProgressoAluno, que usa chaves
+    /// por aluno — assim um perfil novo nunca herda o avanco de outro.
+    /// </summary>
     private bool FaseConcluida(int mundo, int fase)
     {
-        // Tenta SQLite
-        if (DatabaseManager.Instancia != null && SessaoManager.Instancia?.UsuarioAtual != null)
-        {
-            int usuarioId = SessaoManager.Instancia.UsuarioAtual.Id;
-            var progresso = DatabaseManager.Instancia.Conexao
-                .Table<TabelaProgresso>()
-                .Where(p => p.UsuarioId == usuarioId
-                         && p.Mundo == mundo
-                         && p.Fase == fase
-                         && p.Concluida == 1)
-                .FirstOrDefault();
-
-            return progresso != null;
-        }
-
-        // Fallback PlayerPrefs
-        return PlayerPrefs.GetInt($"fase_{mundo}_{fase}_concluida", 0) == 1;
+        return ProgressoAluno.FaseConcluida(mundo, fase);
     }
 
     private void ConfigurarBotaoFase(BotaoFase botao, int numeroFase, bool concluida, bool desbloqueada)
@@ -124,11 +123,20 @@ public class HubFasesController : MonoBehaviour
         botao.btn.interactable = desbloqueada;
         botao.btn.onClick.RemoveAllListeners();
 
-        if (desbloqueada)
+        if (!desbloqueada) return;
+
+        // Valida a cena antes de ligar o clique
+        int indice = numeroFase - 1;
+        if (cenasFases == null || indice >= cenasFases.Length || string.IsNullOrEmpty(cenasFases[indice]))
         {
-            string cena = cenasFases[numeroFase - 1];
-            botao.btn.onClick.AddListener(() => AbrirFase(cena, numeroFase));
+            Debug.LogError($"[HubFases] 'Cenas Fases[{indice}]' esta vazio no Inspector! " +
+                           $"Preencha com o nome da cena da Fase {numeroFase}.");
+            botao.btn.interactable = false;
+            return;
         }
+
+        string cena = cenasFases[indice];
+        botao.btn.onClick.AddListener(() => AbrirFase(cena, numeroFase));
     }
 
     // ════════════════════════════════════════════════════════════════════════
@@ -143,6 +151,6 @@ public class HubFasesController : MonoBehaviour
 
     public void Voltar()
     {
-        SceneManager.LoadScene("HubMundos");
+        SceneManager.LoadScene(cenaHubMundos);
     }
 }
