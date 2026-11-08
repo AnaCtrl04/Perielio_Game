@@ -4,9 +4,11 @@ using TMPro;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// Controla a tela de cadastro e login do jogo Periélio.
-/// Gerencia perfis de Aluno e Professor com usuário e senha (RF01, RF14).
-/// Utiliza PlayerPrefs para persistência local sem necessidade de servidor (RF09).
+/// Controla a tela de cadastro e login do jogo Perielio.
+/// Gerencia perfis de Aluno e Professor com usuario e senha (RF01, RF14).
+/// Utiliza PlayerPrefs para persistencia local sem necessidade de servidor (RF09).
+/// As senhas sao gravadas como hash SHA-256 com salt individual (RNF08).
+/// Contas criadas antes da adocao do hash sao migradas automaticamente no login.
 /// </summary>
 public class CadastroController : MonoBehaviour
 {
@@ -15,19 +17,19 @@ public class CadastroController : MonoBehaviour
     private TipoPerfil perfilSelecionado = TipoPerfil.Nenhum;
 
     // ─── PAINEL PRINCIPAL ────────────────────────────────────────────────────
-    [Header("Botões de Perfil")]
+    [Header("Botoes de Perfil")]
     [SerializeField] private Button btnAluno;
     [SerializeField] private Button btnProfessor;
     [SerializeField] private Color corBotaoSelecionado = new Color(0.2f, 0.6f, 1f);
     [SerializeField] private Color corBotaoNormal      = new Color(0.3f, 0.3f, 0.3f);
 
-    // ─── CAMPOS DO FORMULÁRIO ────────────────────────────────────────────────
+    // ─── CAMPOS DO FORMULARIO ────────────────────────────────────────────────
     [Header("Campos de Cadastro")]
     [SerializeField] private TMP_InputField inputNome;
     [SerializeField] private TMP_InputField inputSenha;
 
-    // ─── ALTERNÂNCIA CADASTRO / LOGIN ────────────────────────────────────────
-    [Header("Alternância Cadastro / Login")]
+    // ─── ALTERNANCIA CADASTRO / LOGIN ────────────────────────────────────────
+    [Header("Alternancia Cadastro / Login")]
     [SerializeField] private GameObject painelCadastro;
     [SerializeField] private GameObject painelLogin;
 
@@ -46,7 +48,7 @@ public class CadastroController : MonoBehaviour
 
     // ─── CENAS ───────────────────────────────────────────────────────────────
     [Header("Cenas")]
-    [SerializeField] private string cenaHubMundos = "HubMundos";
+    [SerializeField] private string cenaHubMundos     = "HubMundos";
     [SerializeField] private string cenaModoProfessor = "ModoProfessor";
 
     // ─── PREFIXOS PLAYERPREFS ────────────────────────────────────────────────
@@ -59,14 +61,12 @@ public class CadastroController : MonoBehaviour
 
     private void Start()
     {
-        // Inicia mostrando cadastro
         MostrarCadastro();
         LimparFeedback();
-
     }
 
     // ════════════════════════════════════════════════════════════════════════
-    // ALTERNÂNCIA CADASTRO / LOGIN
+    // ALTERNANCIA CADASTRO / LOGIN
     // ════════════════════════════════════════════════════════════════════════
 
     public void MostrarCadastro()
@@ -84,14 +84,13 @@ public class CadastroController : MonoBehaviour
     }
 
     // ════════════════════════════════════════════════════════════════════════
-    // SELEÇÃO DE PERFIL — CADASTRO
+    // SELECAO DE PERFIL — CADASTRO
     // ════════════════════════════════════════════════════════════════════════
 
     public void SelecionarAluno()
     {
         perfilSelecionado = TipoPerfil.Aluno;
         AtualizarCorBotoes(btnAluno, btnProfessor);
-
         LimparFeedback();
     }
 
@@ -99,7 +98,6 @@ public class CadastroController : MonoBehaviour
     {
         perfilSelecionado = TipoPerfil.Professor;
         AtualizarCorBotoes(btnProfessor, btnAluno);
-
         LimparFeedback();
     }
 
@@ -117,7 +115,6 @@ public class CadastroController : MonoBehaviour
     {
         LimparFeedback();
 
-        // Validações
         if (perfilSelecionado == TipoPerfil.Nenhum)
         {
             MostrarErro("Selecione um perfil: Aluno ou Professor.");
@@ -129,7 +126,7 @@ public class CadastroController : MonoBehaviour
 
         if (string.IsNullOrEmpty(nome))
         {
-            MostrarErro("Informe um nome de usuário.");
+            MostrarErro("Informe um nome de usuario.");
             return;
         }
 
@@ -139,35 +136,35 @@ public class CadastroController : MonoBehaviour
             return;
         }
 
-        // Verifica se já existe
         string prefixo = perfilSelecionado == TipoPerfil.Aluno
             ? PREFIXO_ALUNO
             : PREFIXO_PROFESSOR;
 
         if (PlayerPrefs.HasKey(prefixo + nome + "_senha"))
         {
-            MostrarErro("Usuário já cadastrado. Faça login.");
+            MostrarErro("Usuario ja cadastrado. Faca login.");
             return;
         }
 
-        // Salva no PlayerPrefs
-        PlayerPrefs.SetString(prefixo + nome + "_senha", senha);
+        // ─── RNF08: nunca grava a senha em texto puro ───────────────────────
+        string salt = SegurancaSenha.GerarSalt();
+
+        PlayerPrefs.SetString(prefixo + nome + "_salt",  salt);
+        PlayerPrefs.SetString(prefixo + nome + "_senha", SegurancaSenha.GerarHash(senha, salt));
         PlayerPrefs.SetString(prefixo + nome + "_perfil",
             perfilSelecionado == TipoPerfil.Aluno ? "aluno" : "professor");
-       
 
         PlayerPrefs.Save();
 
         Debug.Log($"[Cadastro] {perfilSelecionado} '{nome}' cadastrado com sucesso!");
-        MostrarSucesso("Cadastro realizado! Faça login para continuar.");
+        MostrarSucesso("Cadastro realizado! Faca login para continuar.");
 
-        // Limpa campos
         if (inputNome  != null) inputNome.text  = "";
         if (inputSenha != null) inputSenha.text = "";
     }
 
     // ════════════════════════════════════════════════════════════════════════
-    // SELEÇÃO DE PERFIL — LOGIN
+    // SELECAO DE PERFIL — LOGIN
     // ════════════════════════════════════════════════════════════════════════
 
     public void LoginSelecionarAluno()
@@ -203,7 +200,7 @@ public class CadastroController : MonoBehaviour
 
         if (string.IsNullOrEmpty(nome) || string.IsNullOrEmpty(senha))
         {
-            MostrarErro("Preencha usuário e senha.");
+            MostrarErro("Preencha usuario e senha.");
             return;
         }
 
@@ -211,24 +208,51 @@ public class CadastroController : MonoBehaviour
             ? PREFIXO_ALUNO
             : PREFIXO_PROFESSOR;
 
-        string chave = prefixo + nome + "_senha";
+        string chaveSenha = prefixo + nome + "_senha";
+        string chaveSalt  = prefixo + nome + "_salt";
 
-        // Verifica se usuário existe
-        if (!PlayerPrefs.HasKey(chave))
+        if (!PlayerPrefs.HasKey(chaveSenha))
         {
-            MostrarErro("Usuário não encontrado. Cadastre-se primeiro.");
+            MostrarErro("Usuario nao encontrado. Cadastre-se primeiro.");
             return;
         }
 
-        // Verifica senha
-        string senhaSalva = PlayerPrefs.GetString(chave);
-        if (senhaSalva != senha)
+        string salt      = PlayerPrefs.GetString(chaveSalt, "");
+        string hashSalvo = PlayerPrefs.GetString(chaveSenha);
+        bool   senhaOk;
+
+        if (string.IsNullOrEmpty(salt))
+        {
+            // ─── CONTA ANTIGA ────────────────────────────────────────────────
+            // Criada antes da adocao do hash: a senha esta gravada em texto
+            // puro e nao existe salt. Compara direto e, se conferir, converte
+            // a conta para o formato novo sem o usuario perceber.
+            senhaOk = (hashSalvo == senha);
+
+            if (senhaOk)
+            {
+                string novoSalt = SegurancaSenha.GerarSalt();
+                PlayerPrefs.SetString(chaveSalt,  novoSalt);
+                PlayerPrefs.SetString(chaveSenha, SegurancaSenha.GerarHash(senha, novoSalt));
+                PlayerPrefs.Save();
+
+                Debug.Log($"[Login] Conta '{nome}' migrada do formato antigo " +
+                          $"para senha com hash SHA-256.");
+            }
+        }
+        else
+        {
+            // ─── CONTA NOVA ──────────────────────────────────────────────────
+            senhaOk = SegurancaSenha.Conferir(senha, salt, hashSalvo);
+        }
+
+        if (!senhaOk)
         {
             MostrarErro("Senha incorreta. Tente novamente.");
             return;
         }
 
-        // Login bem-sucedido — salva sessão atual
+        // Login bem-sucedido — salva sessao atual
         PlayerPrefs.SetString("sessao_usuario", nome);
         PlayerPrefs.SetString("sessao_perfil",
             perfilLogin == TipoPerfil.Aluno ? "aluno" : "professor");
@@ -236,16 +260,10 @@ public class CadastroController : MonoBehaviour
 
         Debug.Log($"[Login] {perfilLogin} '{nome}' logado com sucesso!");
 
-        // Redireciona conforme perfil
         if (perfilLogin == TipoPerfil.Professor)
-        {
             SceneManager.LoadScene(cenaModoProfessor);
-        }
         else
-        {
-            // No método Entrar() — aluno vai para HubMundos
             SceneManager.LoadScene(cenaHubMundos);
-        }
     }
 
     // ════════════════════════════════════════════════════════════════════════
@@ -254,7 +272,7 @@ public class CadastroController : MonoBehaviour
 
     private void MostrarErro(string mensagem)
     {
-        if (txtErro    != null) { txtErro.text    = mensagem; txtErro.gameObject.SetActive(true); }
+        if (txtErro    != null) { txtErro.text = mensagem; txtErro.gameObject.SetActive(true); }
         if (txtSucesso != null) txtSucesso.gameObject.SetActive(false);
     }
 
@@ -271,33 +289,66 @@ public class CadastroController : MonoBehaviour
     }
 
     // ════════════════════════════════════════════════════════════════════════
-    // UTILITÁRIO ESTÁTICO — outros scripts podem verificar a sessão
+    // UTILITARIO ESTATICO — outros scripts podem verificar a sessao
     // ════════════════════════════════════════════════════════════════════════
 
-    /// <summary>
-    /// Retorna o nome do usuário logado atualmente.
-    /// </summary>
+    /// <summary>Retorna o nome do usuario logado atualmente.</summary>
     public static string UsuarioAtual()
     {
         return PlayerPrefs.GetString("sessao_usuario", "");
     }
 
-    /// <summary>
-    /// Retorna true se o usuário logado é professor.
-    /// </summary>
+    /// <summary>Retorna true se o usuario logado e professor.</summary>
     public static bool EhProfessor()
     {
         return PlayerPrefs.GetString("sessao_perfil", "") == "professor";
     }
 
-    /// <summary>
-    /// Encerra a sessão e volta para a tela de login.
-    /// </summary>
+    /// <summary>Encerra a sessao e volta para a tela de login.</summary>
     public void Sair()
     {
         PlayerPrefs.DeleteKey("sessao_usuario");
         PlayerPrefs.DeleteKey("sessao_perfil");
         PlayerPrefs.Save();
         SceneManager.LoadScene("Cadastro");
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // UTILITARIOS DE TESTE
+    // ════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Apaga TODAS as contas (senha, salt e perfil) de alunos e professores.
+    /// O utilitario de ProgressoAluno apaga apenas o progresso; este apaga as
+    /// credenciais. Clique com o botao direito no componente para executar.
+    /// </summary>
+    [ContextMenu("Apagar TODAS as contas cadastradas")]
+    private void ApagarTodasAsContas()
+    {
+        int removidas = 0;
+
+        // Alunos registrados na lista do ranking
+        foreach (string nome in ProgressoAluno.ListaDeAlunos())
+        {
+            string n = nome.Trim();
+            if (string.IsNullOrEmpty(n)) continue;
+
+            foreach (string prefixo in new[] { PREFIXO_ALUNO, PREFIXO_PROFESSOR })
+            {
+                if (!PlayerPrefs.HasKey(prefixo + n + "_senha")) continue;
+                PlayerPrefs.DeleteKey(prefixo + n + "_senha");
+                PlayerPrefs.DeleteKey(prefixo + n + "_salt");
+                PlayerPrefs.DeleteKey(prefixo + n + "_perfil");
+                removidas++;
+            }
+        }
+
+        PlayerPrefs.DeleteKey("sessao_usuario");
+        PlayerPrefs.DeleteKey("sessao_perfil");
+        PlayerPrefs.Save();
+
+        Debug.Log($"[Cadastro] {removidas} conta(s) apagada(s) da lista de alunos. " +
+                  $"Contas que nunca concluiram uma fase nao constam nessa lista: " +
+                  $"para zerar tudo, use Edit > Clear All PlayerPrefs no Editor.");
     }
 }

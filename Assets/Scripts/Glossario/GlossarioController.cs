@@ -218,7 +218,7 @@ public class GlossarioController : MonoBehaviour
                 titulo = "Lei da Gravitacao Universal",
                 definicao = "Todo corpo com massa atrai outro corpo com massa. A forca dessa atracao " +
                             "aumenta quando as massas sao maiores e diminui rapidamente quando a " +
-                            "distancia entre eles cresce. Formula: F = G x (M1 x M2) / d2.",
+                            "distancia entre eles cresce. Formula: F_i = G · (M_i · m_obj) / r_i².",
                 curiosidade = "Isaac Newton formulou essa lei em 1687. Ela explica tanto a queda de " +
                               "uma maca quanto a orbita da Lua ao redor da Terra."
             },

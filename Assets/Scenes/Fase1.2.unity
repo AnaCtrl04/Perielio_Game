@@ -416,7 +416,7 @@ Transform:
   m_GameObject: {fileID: 115821532}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 7.25, y: -1.05, z: 0}
+  m_LocalPosition: {x: 7.25, y: -0.88, z: 0}
   m_LocalScale: {x: 0.6139605, y: 0.58500916, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -515,8 +515,8 @@ CircleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0.000000015366822}
-  m_Radius: 0.5
+  m_Offset: {x: 0.016283017, y: 0}
+  m_Radius: 1.0698999
 --- !u!1 &117238530
 GameObject:
   m_ObjectHideFlags: 0
@@ -1497,7 +1497,7 @@ Transform:
   m_GameObject: {fileID: 580137487}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 5.31, y: -3.17, z: 0}
+  m_LocalPosition: {x: 4.04, y: -2.56, z: 0}
   m_LocalScale: {x: 1.4522, y: 1.3626, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1516,12 +1516,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CorpoCeleste
   nomeCorpo: Planeta
-  massa: 55
+  massa: 150
   tipo: 0
   exibirCampoGravitacional: 1
   quantidadeAneis: 3
-  raioBaseAnel: 1.5
-  espacamentoAneis: 0.8
+  raioBaseAnel: 2
+  espacamentoAneis: 1
   corCampo: {r: 0.4, g: 0.7, b: 1, a: 0.3}
   dicaPedagogica: "Quanto maior a massa, maior a for\xE7a gravitacional!"
 --- !u!58 &580137490
@@ -1558,8 +1558,8 @@ CircleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
-  m_Radius: 0.88
+  m_Offset: {x: -0.012454341, y: -0.023227965}
+  m_Radius: 1.15088
 --- !u!212 &580137491
 SpriteRenderer:
   serializedVersion: 2
@@ -1942,7 +1942,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 270.99997, y: 89.5894}
+  m_AnchoredPosition: {x: 271, y: 66}
   m_SizeDelta: {x: 785.4025, y: 94.0162}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &679266937
@@ -2911,9 +2911,13 @@ MonoBehaviour:
   btnReiniciar: {fileID: 1807242264}
   painelControles: {fileID: 546548438}
   setaDirecao: {fileID: 0}
-  impulsoInicial: 5
   massaMinima: 1
   massaMaxima: 100
+  velocidadeMaxima: 8
+  velocidadeMinima: 3
+  anguloMinimo: 0
+  anguloMaximo: 360
+  offsetSpriteGraus: -90
   maxPontosRastro: 500
   corRastro: {r: 1, g: 1, b: 1, a: 0.4}
   larguraRastro: 0.05
@@ -3061,8 +3065,8 @@ CircleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
-  m_Radius: 0.3
+  m_Offset: {x: 0.032002397, y: 0.5310189}
+  m_Radius: 0.37474144
 --- !u!50 &1069498414
 Rigidbody2D:
   serializedVersion: 5
@@ -3256,7 +3260,7 @@ Transform:
   m_GameObject: {fileID: 1137797540}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 3.25, y: 3.262, z: 0}
+  m_LocalPosition: {x: 2.56, y: 3.05, z: 0}
   m_LocalScale: {x: 1.7224201, y: 1.635943, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3275,12 +3279,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CorpoCeleste
   nomeCorpo: Planeta
-  massa: 30
+  massa: 110
   tipo: 0
   exibirCampoGravitacional: 1
-  quantidadeAneis: 3
+  quantidadeAneis: 5
   raioBaseAnel: 1.5
-  espacamentoAneis: 0.8
+  espacamentoAneis: 1
   corCampo: {r: 0.4, g: 0.7, b: 1, a: 0.3}
   dicaPedagogica: "Quanto maior a massa, maior a for\xE7a gravitacional!"
 --- !u!58 &1137797543
@@ -3317,8 +3321,8 @@ CircleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
-  m_Radius: 0.76
+  m_Offset: {x: 0.009064202, y: 0}
+  m_Radius: 0.85064167
 --- !u!212 &1137797544
 SpriteRenderer:
   serializedVersion: 2
@@ -4082,7 +4086,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -441.89316, y: 98.33745}
+  m_AnchoredPosition: {x: -441.9, y: 70}
   m_SizeDelta: {x: 489.2823, y: 66.3513}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1479018721
@@ -4346,7 +4350,7 @@ Transform:
   m_GameObject: {fileID: 1533712832}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -1.8961142, y: -3.6553793, z: 0}
+  m_LocalPosition: {x: -4.67, y: -2.96, z: 0}
   m_LocalScale: {x: 1.442572, y: 1.2612603, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4365,7 +4369,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CorpoCeleste
   nomeCorpo: Planeta
-  massa: 20
+  massa: 90
   tipo: 0
   exibirCampoGravitacional: 1
   quantidadeAneis: 3
@@ -4407,8 +4411,8 @@ CircleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
-  m_Radius: 0.1085
+  m_Offset: {x: 0.008636189, y: 0}
+  m_Radius: 1.1361885
 --- !u!212 &1533712836
 SpriteRenderer:
   serializedVersion: 2
@@ -4496,8 +4500,8 @@ Transform:
   m_GameObject: {fileID: 1743753434}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -5.5, y: 2.38, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: -3.9, y: 2.42, z: 0}
+  m_LocalScale: {x: 1.3111956, y: 1.2546233, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 117238531}
@@ -4515,7 +4519,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CorpoCeleste
   nomeCorpo: Planeta
-  massa: 50
+  massa: 3000
   tipo: 0
   exibirCampoGravitacional: 1
   quantidadeAneis: 3
@@ -4557,8 +4561,8 @@ CircleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
-  m_Radius: 1.475
+  m_Offset: {x: 0, y: -0.01593637}
+  m_Radius: 1.1395284
 --- !u!212 &1743753438
 SpriteRenderer:
   serializedVersion: 2

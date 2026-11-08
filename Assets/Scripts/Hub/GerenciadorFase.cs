@@ -106,6 +106,7 @@ public class GerenciadorFase : MonoBehaviour
 
         faseConcluida = true;
         tentativasUsadas++;
+        AtualizarUI();
 
         SalvarProgresso();
 
